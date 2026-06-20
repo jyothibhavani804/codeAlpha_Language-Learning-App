@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+<title>LingoMaster Pro — Interactive Language Learning App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0b14; --surface:#13131f; --surface-2:#1c1c2e; --line:rgba(255,255,255,.08);
+  --text:#f5f5fa; --muted:#9a9ab0; --primary:#7c5cff; --primary-2:#5ee0c1; --accent:#ffb84d;
+  --danger:#ff5d7a; --success:#3ddc97;
+  --grad: linear-gradient(135deg,#7c5cff 0%, #5ee0c1 100%);
+  --grad-warm: linear-gradient(135deg,#ffb84d 0%, #ff5d7a 100%);
+  --shadow: 0 20px 60px -20px rgba(124,92,255,.45);
+  --radius:22px;
+  --font:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;
+  --display:'Fraunces',serif;
+}
+.light{
+  --bg:#f6f5f1; --surface:#ffffff; --surface-2:#f0eee8; --line:rgba(15,15,25,.08);
+  --text:#0f0f19; --muted:#5d5d72;
+  --shadow: 0 20px 60px -20px rgba(124,92,255,.25);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--text);
+  display:flex;align-items:center;justify-content:center;min-height:100vh;
+  overflow:hidden;
+  background-image:
+    radial-gradient(800px 500px at 10% 0%, rgba(124,92,255,.18), transparent 60%),
+    radial-gradient(700px 600px at 100% 100%, rgba(94,224,193,.12), transparent 60%);
+}
+.phone{
+  width:min(440px, 100vw); height:min(900px, 100vh);
+  background:var(--bg); border-radius:48px; overflow:hidden; position:relative;
+  border:1px solid var(--line);
+  box-shadow:0 50px 100px -30px rgba(0,0,0,.6), 0 0 0 8px #1a1a2a;
+}
+@media (max-width: 480px){
+  body{background:var(--bg)}
+  .phone{width:100vw;height:100vh;border-radius:0;box-shadow:none;border:none}
+}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;background:var(--bg);overflow:hidden}
+.screen.active{display:flex;animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.scroll{flex:1;overflow-y:auto;padding:24px 20px 110px;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+
+/* Top bar */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 6px}
+.topbar h1{font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:-.5px}
+.icon-btn{
+  width:42px;height:42px;border-radius:14px;background:var(--surface);
+  display:grid;place-items:center;border:1px solid var(--line);cursor:pointer;
+  color:var(--text);transition:transform .2s
+}
+.icon-btn:active{transform:scale(.94)}
+.row{display:flex;align-items:center;gap:12px}
+
+/* Bottom nav */
+.tabbar{
+  position:absolute;bottom:14px;left:14px;right:14px;height:72px;
+  background:var(--surface);border:1px solid var(--line);border-radius:28px;
+  display:flex;justify-content:space-around;align-items:center;
+  backdrop-filter:blur(20px);box-shadow:0 20px 40px -10px rgba(0,0,0,.4);z-index:10;
+}
+.tab{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--muted);
+  font-size:10px;font-weight:600;cursor:pointer;padding:8px 14px;border-radius:18px;transition:.25s}
+.tab.active{color:var(--text);background:var(--surface-2)}
+.tab.active svg{stroke:url(#g1)}
+.tab svg{width:22px;height:22px;stroke-width:2}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+.gcard{background:var(--grad);border-radius:var(--radius);padding:22px;color:#fff;position:relative;overflow:hidden}
+.gcard::before{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;
+  background:rgba(255,255,255,.15);border-radius:50%}
+.gcard::after{content:"";position:absolute;right:30px;bottom:-60px;width:120px;height:120px;
+  background:rgba(255,255,255,.08);border-radius:50%}
+
+/* Buttons */
+.btn{
+  width:100%;padding:16px;border-radius:18px;border:none;font-family:var(--font);
+  font-size:15px;font-weight:700;cursor:pointer;transition:transform .2s, opacity .2s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--grad);color:#0b0b14}
+.btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--line)}
+.btn-dark{background:var(--text);color:var(--bg)}
+
+/* Inputs */
+.input{
+  width:100%;padding:16px 18px;border-radius:16px;border:1px solid var(--line);
+  background:var(--surface);color:var(--text);font-family:var(--font);font-size:15px;outline:none;
+}
+.input:focus{border-color:var(--primary)}
+
+/* Hero greeting */
+.greet{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.greet .hello{font-size:13px;color:var(--muted);font-weight:500}
+.greet h2{font-family:var(--display);font-size:26px;margin-top:2px;letter-spacing:-.5px}
+.avatar{width:48px;height:48px;border-radius:50%;background:var(--grad);display:grid;place-items:center;
+  color:#0b0b14;font-weight:800;font-size:18px}
+
+/* Stat strip */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px;text-align:center}
+.stat .val{font-family:var(--display);font-size:22px;font-weight:700}
+.stat .lbl{font-size:11px;color:var(--muted);margin-top:2px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+
+/* Section */
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:22px 4px 12px}
+.section-title h3{font-size:17px;font-weight:700}
+.section-title a{color:var(--primary);font-size:13px;font-weight:600;cursor:pointer}
+
+/* Quick actions */
+.qa{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.qa-item{padding:18px;border-radius:20px;background:var(--surface);border:1px solid var(--line);cursor:pointer;
+  display:flex;flex-direction:column;gap:10px;transition:.25s}
+.qa-item:hover{transform:translateY(-2px)}
+.qa-icon{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;color:#fff}
+.qa-item .t{font-weight:700;font-size:14px}
+.qa-item .s{font-size:12px;color:var(--muted)}
+
+/* Language chips */
+.lang-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.lang{padding:18px;border-radius:20px;background:var(--surface);border:1px solid var(--line);cursor:pointer;display:flex;flex-direction:column;gap:8px;transition:.2s;position:relative}
+.lang.selected{border-color:var(--primary);background:linear-gradient(135deg,rgba(124,92,255,.15),rgba(94,224,193,.08))}
+.lang .flag{font-size:34px}
+.lang .name{font-weight:700;font-size:15px}
+.lang .lvl{font-size:11px;color:var(--muted)}
+
+/* Flashcard */
+.fc-wrap{perspective:1500px;height:380px;margin-top:10px}
+.fc{position:relative;width:100%;height:100%;transition:transform .7s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d;cursor:pointer}
+.fc.flipped{transform:rotateY(180deg)}
+.fc-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:28px;padding:30px;display:flex;flex-direction:column;justify-content:space-between}
+.fc-front{background:var(--grad);color:#0b0b14}
+.fc-back{background:var(--surface);border:1px solid var(--line);transform:rotateY(180deg)}
+.fc .word{font-family:var(--display);font-size:46px;font-weight:700;letter-spacing:-1px;line-height:1.1}
+.fc .pron{font-size:14px;opacity:.7;margin-top:6px}
+.fc .ex{font-size:14px;color:var(--muted);font-style:italic;margin-top:14px}
+.fc-controls{display:flex;justify-content:space-between;align-items:center;margin-top:18px}
+.chip{display:inline-block;padding:6px 12px;border-radius:999px;background:rgba(0,0,0,.15);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.fc-back .chip{background:var(--surface-2);color:var(--muted)}
+
+/* Lesson list */
+.lesson{display:flex;align-items:center;gap:14px;padding:14px;border-radius:18px;background:var(--surface);border:1px solid var(--line);margin-bottom:10px;cursor:pointer;transition:.2s}
+.lesson:hover{transform:translateX(2px)}
+.lesson .num{width:46px;height:46px;border-radius:14px;background:var(--surface-2);display:grid;place-items:center;font-weight:800;font-family:var(--display)}
+.lesson.done .num{background:var(--grad);color:#0b0b14}
+.lesson .info{flex:1}
+.lesson .info .t{font-weight:700;font-size:14px}
+.lesson .info .s{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* Progress */
+.bar{height:8px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin-top:8px}
+.bar > div{height:100%;background:var(--grad);border-radius:99px;transition:width .8s}
+
+/* Quiz */
+.q-opt{padding:16px 18px;border-radius:16px;background:var(--surface);border:2px solid var(--line);margin-bottom:10px;cursor:pointer;font-weight:600;display:flex;justify-content:space-between;align-items:center;transition:.2s}
+.q-opt:hover{border-color:var(--primary)}
+.q-opt.correct{border-color:var(--success);background:rgba(61,220,151,.1)}
+.q-opt.wrong{border-color:var(--danger);background:rgba(255,93,122,.1)}
+.q-opt .k{width:28px;height:28px;border-radius:8px;background:var(--surface-2);display:grid;place-items:center;font-size:12px;font-weight:800}
+
+/* Achievements */
+.ach{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ach-item{aspect-ratio:1;border-radius:18px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px;text-align:center}
+.ach-item.unlocked{background:var(--grad);color:#0b0b14}
+.ach-item .e{font-size:28px}
+.ach-item .n{font-size:10px;font-weight:700}
+
+/* Auth */
+.auth-wrap{padding:40px 24px;display:flex;flex-direction:column;height:100%}
+.auth-hero{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:14px}
+.logo-mark{width:90px;height:90px;border-radius:26px;background:var(--grad);display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:42px;color:#0b0b14;box-shadow:var(--shadow);margin-bottom:8px}
+.auth-hero h1{font-family:var(--display);font-size:36px;letter-spacing:-1px;line-height:1.05}
+.auth-hero p{color:var(--muted);font-size:14px;max-width:280px}
+
+/* Profile */
+.profile-head{display:flex;flex-direction:column;align-items:center;text-align:center;padding:20px 0;gap:8px}
+.profile-head .av{width:90px;height:90px;border-radius:50%;background:var(--grad);display:grid;place-items:center;font-weight:800;font-size:34px;color:#0b0b14;font-family:var(--display)}
+
+/* Mic */
+.mic{
+  width:120px;height:120px;border-radius:50%;background:var(--grad);
+  display:grid;place-items:center;color:#0b0b14;margin:24px auto;
+  box-shadow:0 0 0 0 rgba(124,92,255,.5);cursor:pointer;
+}
+.mic.live{animation:pulse 1.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(124,92,255,.5)}70%{box-shadow:0 0 0 30px rgba(124,92,255,0)}100%{box-shadow:0 0 0 0 rgba(124,92,255,0)}}
+
+/* AI chat */
+.bubble{padding:12px 16px;border-radius:18px;max-width:80%;margin-bottom:10px;font-size:14px;line-height:1.45}
+.bubble.ai{background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:6px}
+.bubble.me{background:var(--grad);color:#0b0b14;align-self:flex-end;border-bottom-right-radius:6px}
+.chat-list{display:flex;flex-direction:column;gap:4px}
+
+/* Settings */
+.setting{display:flex;justify-content:space-between;align-items:center;padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:16px;margin-bottom:10px}
+.setting .l{font-weight:600;font-size:14px}
+.setting .d{font-size:12px;color:var(--muted);margin-top:2px}
+.toggle{width:44px;height:26px;background:var(--surface-2);border-radius:99px;position:relative;cursor:pointer;transition:.25s}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.25s}
+.toggle.on{background:var(--grad)}
+.toggle.on::after{left:21px}
+
+/* Streak ring */
+.ring{position:relative;width:80px;height:80px}
+.ring svg{transform:rotate(-90deg)}
+.ring .num{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:22px}
+
+/* Badge */
+.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:var(--surface);border:1px solid var(--line);border-radius:99px;font-size:11px;font-weight:700}
+
+/* Hidden helpers */
+.hidden{display:none !important}
+.sp{height:14px}
+.center{text-align:center}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+<linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#7c5cff"/><stop offset="100%" stop-color="#5ee0c1"/></linearGradient>
+</defs></svg>
+
+<div class="phone" id="phone">
+
+<!-- ONBOARDING / LOGIN -->
+<div class="screen active" id="s-auth">
+  <div class="auth-wrap">
+    <div class="auth-hero">
+      <div class="logo-mark">L</div>
+      <h1>Master New Languages,<br/>Unlock New Opportunities.</h1>
+      <p>Build vocabulary, improve pronunciation, practice daily lessons, and track your progress with interactive quizzes and smart learning tools.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-primary" onclick="go('s-langpick')">Get started — it's free</button>
+      <button class="btn btn-ghost" onclick="go('s-login')">I already have an account</button>
+      <p class="center" style="font-size:11px;color:var(--muted);margin-top:6px">By continuing you agree to our Terms & Privacy.</p>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div class="screen" id="s-login">
+  <div class="topbar">
+    <button class="icon-btn" onclick="go('s-auth')">←</button>
+    <h1>Welcome back</h1>
+    <div style="width:42px"></div>
+  </div>
+  <div class="scroll">
+    <p style="color:var(--muted);font-size:14px;margin-bottom:18px">Sign in to continue your learning journey.</p>
+    <input class="input" placeholder="Email" style="margin-bottom:10px"/>
+    <input class="input" type="password" placeholder="Password" style="margin-bottom:14px"/>
+    <button class="btn btn-primary" onclick="go('s-home')">Sign in</button>
+    <div class="sp"></div>
+    <div style="display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;margin:10px 0">
+      <div style="flex:1;height:1px;background:var(--line)"></div>or<div style="flex:1;height:1px;background:var(--line)"></div>
+    </div>
+    <button class="btn btn-ghost" onclick="go('s-home')">Continue with Google</button>
+    <div class="sp"></div>
+    <button class="btn btn-ghost" onclick="go('s-home')">Continue with Apple</button>
+    <div class="sp"></div>
+    <button class="btn btn-ghost" onclick="go('s-home')">Continue as Guest</button>
+  </div>
+</div>
+
+<!-- LANGUAGE PICKER -->
+<div class="screen" id="s-langpick">
+  <div class="topbar">
+    <button class="icon-btn" onclick="go('s-auth')">←</button>
+    <h1>Choose language</h1>
+    <div style="width:42px"></div>
+  </div>
+  <div class="scroll">
+    <p style="color:var(--muted);font-size:14px;margin-bottom:16px">Which language would you like to learn?</p>
+    <div class="lang-grid" id="langGrid"></div>
+    <div class="sp"></div><div class="sp"></div>
+    <button class="btn btn-primary" onclick="go('s-home')">Start learning</button>
+  </div>
+</div>
+
+<!-- HOME -->
+<div class="screen" id="s-home">
+  <div class="topbar">
+    <div class="row">
+      <div class="avatar">A</div>
+      <div>
+        <div style="font-size:12px;color:var(--muted)">Good morning</div>
+        <div style="font-weight:700;font-size:15px">Alex</div>
+      </div>
+    </div>
+    <div class="row" style="gap:8px">
+      <button class="icon-btn" onclick="toggleTheme()" title="Theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <button class="icon-btn" onclick="go('s-settings')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09c0 .66.39 1.25 1 1.51a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82c.26.61.85 1 1.51 1H21a2 2 0 1 1 0 4h-.09c-.66 0-1.25.39-1.51 1z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="scroll">
+    <div class="gcard">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="chip" style="background:rgba(255,255,255,.2);color:#fff">Daily Streak</div>
+          <div style="font-family:var(--display);font-size:34px;font-weight:700;margin-top:8px">7 days 🔥</div>
+          <div style="font-size:13px;opacity:.85;margin-top:2px">Keep it going — finish today's lesson.</div>
+        </div>
+        <div class="ring">
+          <svg width="80" height="80">
+            <circle cx="40" cy="40" r="34" stroke="rgba(255,255,255,.2)" stroke-width="6" fill="none"/>
+            <circle cx="40" cy="40" r="34" stroke="#fff" stroke-width="6" fill="none" stroke-dasharray="213" stroke-dashoffset="60" stroke-linecap="round"/>
+          </svg>
+          <div class="num" style="color:#0b0b14">72%</div>
+        </div>
+      </div>
+      <button class="btn btn-dark" style="margin-top:16px" onclick="go('s-lesson')">Continue Lesson 4</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="val">1,240</div><div class="lbl">XP</div></div>
+      <div class="stat"><div class="val">328</div><div class="lbl">Words</div></div>
+      <div class="stat"><div class="val">94%</div><div class="lbl">Accuracy</div></div>
+    </div>
+
+    <div class="section-title"><h3>Quick start</h3></div>
+    <div class="qa">
+      <div class="qa-item" onclick="go('s-flash')">
+        <div class="qa-icon" style="background:var(--grad)">🃏</div>
+        <div class="t">Flashcards</div><div class="s">Review 12 cards</div>
+      </div>
+      <div class="qa-item" onclick="go('s-quiz')">
+        <div class="qa-icon" style="background:var(--grad-warm)">🎯</div>
+        <div class="t">Quick Quiz</div><div class="s">5 questions</div>
+      </div>
+      <div class="qa-item" onclick="go('s-pron')">
+        <div class="qa-icon" style="background:linear-gradient(135deg,#5ee0c1,#7c5cff)">🎤</div>
+        <div class="t">Pronounce</div><div class="s">AI scored</div>
+      </div>
+      <div class="qa-item" onclick="go('s-ai')">
+        <div class="qa-icon" style="background:linear-gradient(135deg,#ff5d7a,#ffb84d)">🤖</div>
+        <div class="t">AI Tutor</div><div class="s">Ask anything</div>
+      </div>
+    </div>
+
+    <div class="section-title"><h3>Today's lessons</h3><a onclick="go('s-lessons')">See all</a></div>
+    <div id="todayLessons"></div>
+
+    <div class="section-title"><h3>Word of the day</h3></div>
+    <div class="card" style="background:var(--grad);color:#0b0b14;border:none">
+      <div class="chip">Spanish · Noun</div>
+      <div style="font-family:var(--display);font-size:32px;font-weight:700;margin-top:8px">mariposa</div>
+      <div style="font-size:13px;opacity:.85">/ma.ɾiˈpo.sa/ — butterfly</div>
+      <div style="font-size:13px;font-style:italic;margin-top:10px">"La mariposa vuela en el jardín."</div>
+    </div>
+  </div>
+</div>
+
+<!-- LESSONS LIST -->
+<div class="screen" id="s-lessons">
+  <div class="topbar">
+    <button class="icon-btn" onclick="go('s-home')">←</button>
+    <h1>Lessons</h1>
+    <div style="width:42px"></div>
+  </div>
+  <div class="scroll">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <span class="badge" style="background:var(--grad);color:#0b0b14;border:none">All</span>
+      <span class="badge">Vocabulary</span>
+      <span class="badge">Grammar</span>
+      <span class="badge">Listening</span>
+      <span class="badge">Speaking</span>
+    </div>
+    <div id="allLessons"></div>
+  </div>
+</div>
+
+<!-- LESSON DETAIL -->
+<div class="screen" id="s-lesson">
+  <div class="topbar">
+    <button class="icon-btn" onclick="go('s-home')">←</button>
+    <h1>Lesson 4</h1>
+    <button class="icon-btn">⋯</button>
+  </div>
+  <div class="scroll">
+    <div class="chip" style="background:var(--surface);border:1px solid var(--line)">Vocabulary · 12 min</div>
+    <h2 style="font-family:var(--display);font-size:28px;margin-top:10px;letter-spacing:-.5px">Greetings & Introductions</h2>
+    <div class="bar" style="margin-top:14px"><div style="width:60%"></div></div>
+    <div style="font-size:12px;color:var(--muted);margin-top:6px">6 of 10 steps · 60%</div>
+
+    <div class="card" style="margin-top:18px">
+      <div class="chip" style="background:var(--surface-2);color:var(--muted)">New word</div>
+      <div style="font-family:var(--display);font-size:36px;font-weight:700;margin-top:8px">¿Cómo estás?</div>
+      <div style="font-size:14px;color:var(--muted)">/ˈko.mo esˈtas/ — How are you?</div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-ghost" onclick="speak('¿Cómo estás?','es')">🔊 Listen</button>
+        <button class="btn btn-ghost" onclick="go('s-pron')">🎤 Speak</button>
+      </div>
+    </div>
+
+    <div class="section-title"><h3>Examples</h3></div>
+    <div class="card" style="margin-bottom:10px">
+      <div style="font-weight:700">Hola, ¿cómo estás?</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:4px">Hi, how are you?</div>
+    </div>
+    <div class="card">
+      <div style="font-weight:700">¿Cómo estás hoy, amigo?</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:4px">How are you today, friend?</div>
+    </div>
+
+    <div class="sp"></div>
+    <button class="btn btn-primary" onclick="go('s-quiz')">Continue →</button>
+  </div>
+</div>
+
+<!-- FLASHCARDS -->
+<div class="screen" id="s-flash">
+  <div class="topbar">
+    <button class="icon-btn" onclick="go('s-home')">←</button>
+    <h1>Flashcards</h1>
+    <button class="icon-btn" onclick="shuffleCards()">⇅</button>
+  </div>
+  <div class="scroll">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:13px;color:var(--muted)"><span id="fcIdx">1</span> / <span id="fcTot">5</span></div>
+      <div class="badge">Spanish</div>
+    </div>
+    <div class="bar" style="margin-top:8px"><div id="fcBar" style="width:20%"></div></div>
+
+    <div class="fc-wrap">
+      <div class="fc" id="fcEl" onclick="flipCard()">
+        <div class="fc-face fc-front">
+          <div><span class="chip">Tap to flip</span></div>
+          <div>
+            <div class="word" id="fcWord">hola</div>
+            <div class="pron" id="fcPron">/ˈo.la/</div>
+          </div>
+          <button class="btn btn-dark" style="width:auto;padding:10px 16px;align-self:flex-start" onclick="event.stopPropagation();speak(document.getElementById('fcWord').textContent,'es')">🔊 Listen</button>
+        </div>
+        <div class="fc-face fc-back">
+          <div><span class="chip">Translation</span></div>
+          <div>
+            <div class="word" id="fcTrans" style="color:var(--text)">hello</div>
+            <div class="ex" id="fcEx">"Hola, ¿cómo estás?" — Hello, how are you?</div>
+          </div>
+          <div style="font-size:12px;color:var(--muted)">Tap to flip back</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:18px">
+      <button class="btn btn-ghost" onclick="prevCard()">←</button>
+      <button class="btn btn-primary" onclick="markKnown()">I know it</button>
+      <button class="btn btn-ghost" onclick="nextCard()">→</button>
+    </div>
+    <div class="sp"></div>
+    <button class="btn btn-ghost" onclick="saveCard()">⭐ Save to favorites</button>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div class="screen" id="s-quiz">
+  <div class="topbar">
+    <button class="icon-btn" onclick="go('s-home')">✕</button>
+    <h1>Quick Quiz</h1>
+    <div class="badge" id="qScore">0 XP</div>
+  </div>
+  <div class="scroll">
+    <div class="bar"><div id="qBar" style="width:20%"></div></div>
+    <div style="font-size:12px;color:var(--muted);margin-top:8px">Question <span id="qNum">1</span> of 5</div>
+
+    <div style="margin-top:24px">
+      <div style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:700">Translate</div>
+      <h2 style="font-family:var(--display);font-size:34px;letter-spacing:-.5px;margin-top:6px" id="qWord">gracias</h2>
+    </div>
+
+    <div style="margin-top:28px" id="qOpts"></div>
+
+    <div class="sp"></div>
+    <button class="btn btn-primary hidden" id="qNext" onclick="nextQuestion()">Next question →</button>
+  </div>
+</div>
+
+<!-- PRONUNCIATION -->
+<div class="screen" id="s-pron">
+  <div class="topbar">
+    <button class="icon-btn" onclick="go('s-home')">←</button>
+    <h1>Pronunciation</h1>
+    <div style="width:42px"></div>
+  </div>
+  <div class="scroll center">
+    <div class="card">
+      <div class="chip" style="background:var(--surface-2);color:var(--muted)">Repeat after the speaker</div>
+      <div style="font-family:var(--display);font-size:38px;font-weight:700;margin-top:10px">Buenos días</div>
+      <div style="font-size:14px;color:var(--muted)">/ˈbwe.nos ˈdi.as/ — Good morning</div>
+      <button class="btn btn-ghost" style="margin-top:14px" onclick="speak('Buenos días','es')">🔊 Listen to native speaker</button>
+    </div>
+
+    <div class="mic" id="micBtn" onclick="toggleMic()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="42" height="42" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+    </div>
+    <div style="font-size:13px;color:var(--muted)" id="micStatus">Tap microphone to record</div>
+
+    <div class="card hidden" id="pronResult" style="margin-top:20px;text-align:left">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-weight:700">Your score</div>
+        <div style="font-family:var(--display);font-size:28px;font-weight:700;color:var(--success)">92%</div>
+      </div>
+      <div style="font-size:13px;color:var(--muted);margin-top:6px">Great pronunciation! Slight emphasis improvement on "días".</div>
+      <div class="bar" style="margin-top:10px"><div style="width:92%"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div class="screen" id="s-progress">
+  <div class="topbar">
+    <button class="icon-btn" onclick="go('s-home')">←</button>
+    <h1>Progress</h1>
+    <div style="width:42px"></div>
+  </div>
+  <div class="scroll">
+    <div class="gcard">
+      <div class="chip" style="background:rgba(255,255,255,.2);color:#fff">This week</div>
+      <div style="font-family:var(--display);font-size:36px;font-weight:700;margin-top:8px">+420 XP</div>
+      <div style="font-size:13px;opacity:.85">You're 28% ahead of last week 🎉</div>
+      <svg viewBox="0 0 300 100" style="margin-top:14px;width:100%;height:80px">
+        <polyline fill="none" stroke="rgba(255,255,255,.9)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
+          points="0,80 50,60 100,70 150,40 200,50 250,20 300,30"/>
+        <polyline fill="rgba(255,255,255,.15)" stroke="none"
+          points="0,80 50,60 100,70 150,40 200,50 250,20 300,30 300,100 0,100"/>
+      </svg>
+      <div style="display:flex;justify-content:space-between;font-size:11px;opacity:.8;margin-top:4px">
+        <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="val">328</div><div class="lbl">Words</div></div>
+      <div class="stat"><div class="val">42</div><div class="lbl">Lessons</div></div>
+      <div class="stat"><div class="val">94%</div><div class="lbl">Accuracy</div></div>
+    </div>
+
+    <div class="section-title"><h3>Skills</h3></div>
+    <div class="card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between"><span style="font-weight:700">Vocabulary</span><span style="color:var(--muted);font-size:13px">Advanced</span></div>
+      <div class="bar"><div style="width:78%"></div></div>
+    </div>
+    <div class="card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between"><span style="font-weight:700">Grammar</span><span style="color:var(--muted);font-size:13px">Intermediate</span></div>
+      <div class="bar"><div style="width:55%"></div></div>
+    </div>
+    <div class="card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between"><span style="font-weight:700">Listening</span><span style="color:var(--muted);font-size:13px">Advanced</span></div>
+      <div class="bar"><div style="width:82%"></div></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between"><span style="font-weight:700">Speaking</span><span style="color:var(--muted);font-size:13px">Beginner</span></div>
+      <div class="bar"><div style="width:34%"></div></div>
+    </div>
+
+    <div class="section-title"><h3>Achievements</h3></div>
+    <div class="ach">
+      <div class="ach-item unlocked"><div class="e">🔥</div><div class="n">7-Day Streak</div></div>
+      <div class="ach-item unlocked"><div class="e">🎯</div><div class="n">First Quiz</div></div>
+      <div class="ach-item unlocked"><div class="e">📚</div><div class="n">100 Words</div></div>
+      <div class="ach-item"><div class="e">🏆</div><div class="n">Grammar Master</div></div>
+      <div class="ach-item"><div class="e">🌍</div><div class="n">Polyglot</div></div>
+      <div class="ach-item"><div class="e">💎</div><div class="n">30-Day Streak</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- AI TUTOR -->
+<div class="screen" id="s-ai">
+  <div class="topbar">
+    <button class="icon-btn" onclick="go('s-home')">←</button>
+    <div style="text-align:center"><h1 style="font-size:18px">AI Tutor</h1><div style="font-size:11px;color:var(--success)">● Online</div></div>
+    <button class="icon-btn">⟲</button>
+  </div>
+  <div class="scroll chat-list" id="chatList">
+    <div class="bubble ai">¡Hola! I'm your AI language tutor. Ask me anything — translations, grammar, conversation practice. 🌍</div>
+    <div class="bubble me">How do I say "I'd like a coffee, please" in Spanish?</div>
+    <div class="bubble ai"><b>"Me gustaría un café, por favor."</b><br/>/me ɡus.taˈɾi.a un kaˈfe poɾ faˈβoɾ/<br/><br/>You can also say <i>"Un café, por favor"</i> for a more casual version. ☕</div>
+    <div class="bubble me">Quiz me on food vocabulary!</div>
+    <div class="bubble ai">¡Perfecto! What does <b>"manzana"</b> mean?<br/>A) Bread B) Apple C) Cheese D) Water</div>
+  </div>
+  <div style="padding:12px 16px 90px;display:flex;gap:8px;background:var(--bg);border-top:1px solid var(--line)">
+    <input class="input" placeholder="Ask anything..." id="chatIn" onkeydown="if(event.key==='Enter')sendChat()"/>
+    <button class="icon-btn" style="background:var(--grad);color:#0b0b14;border:none;width:48px;height:48px" onclick="sendChat()">➤</button>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div class="screen" id="s-profile">
+  <div class="topbar">
+    <button class="icon-btn" onclick="go('s-home')">←</button>
+    <h1>Profile</h1>
+    <button class="icon-btn" onclick="go('s-settings')">⚙</button>
+  </div>
+  <div class="scroll">
+    <div class="profile-head">
+      <div class="av">A</div>
+      <h2 style="font-family:var(--display);font-size:22px">Alex Morgan</h2>
+      <div style="color:var(--muted);font-size:13px">Learning Spanish · Intermediate</div>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <span class="badge">🔥 7 days</span>
+        <span class="badge">⚡ 1,240 XP</span>
+        <span class="badge">📘 Level 12</span>
+      </div>
+    </div>
+
+    <div class="section-title"><h3>My languages</h3></div>
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:12px"><span style="font-size:28px">🇪🇸</span><div><div style="font-weight:700">Spanish</div><div style="font-size:12px;color:var(--muted)">Level 12 · 1,240 XP</div></div></div>
+      <span class="chip" style="background:var(--grad);color:#0b0b14">Active</span>
+    </div>
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:12px"><span style="font-size:28px">🇯🇵</span><div><div style="font-weight:700">Japanese</div><div style="font-size:12px;color:var(--muted)">Level 4 · 280 XP</div></div></div>
+    </div>
+    <button class="btn btn-ghost" onclick="go('s-langpick')">+ Add new language</button>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="screen" id="s-settings">
+  <div class="topbar">
+    <button class="icon-btn" onclick="go('s-home')">←</button>
+    <h1>Settings</h1>
+    <div style="width:42px"></div>
+  </div>
+  <div class="scroll">
+    <div class="section-title"><h3>Appearance</h3></div>
+    <div class="setting"><div><div class="l">Dark mode</div><div class="d">Easier on the eyes</div></div><div class="toggle on" onclick="this.classList.toggle('on');toggleTheme()"></div></div>
+
+    <div class="section-title"><h3>Learning</h3></div>
+    <div class="setting"><div><div class="l">Daily goal</div><div class="d">20 minutes / day</div></div><div style="color:var(--primary);font-weight:700">›</div></div>
+    <div class="setting"><div><div class="l">Reminder time</div><div class="d">9:00 AM</div></div><div style="color:var(--primary);font-weight:700">›</div></div>
+    <div class="setting"><div><div class="l">Difficulty</div><div class="d">Intermediate</div></div><div style="color:var(--primary);font-weight:700">›</div></div>
+
+    <div class="section-title"><h3>Notifications</h3></div>
+    <div class="setting"><div><div class="l">Push notifications</div><div class="d">Daily reminders & streaks</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+    <div class="setting"><div><div class="l">Sound effects</div><div class="d">Tap & success sounds</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+
+    <div class="section-title"><h3>Account</h3></div>
+    <div class="setting"><div><div class="l">Manage subscription</div><div class="d">Free plan</div></div><div style="color:var(--primary);font-weight:700">›</div></div>
+    <div class="setting"><div><div class="l">Privacy</div><div class="d">Data & permissions</div></div><div style="color:var(--primary);font-weight:700">›</div></div>
+    <div class="sp"></div>
+    <button class="btn btn-ghost" onclick="go('s-auth')" style="color:var(--danger)">Sign out</button>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="tabbar" id="tabbar">
+  <div class="tab active" data-screen="s-home" onclick="go('s-home')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>
+    Home
+  </div>
+  <div class="tab" data-screen="s-lessons" onclick="go('s-lessons')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+    Learn
+  </div>
+  <div class="tab" data-screen="s-ai" onclick="go('s-ai')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><circle cx="9" cy="10" r="1" fill="currentColor"/><circle cx="15" cy="10" r="1" fill="currentColor"/></svg>
+    AI
+  </div>
+  <div class="tab" data-screen="s-progress" onclick="go('s-progress')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-6"/></svg>
+    Stats
+  </div>
+  <div class="tab" data-screen="s-profile" onclick="go('s-profile')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+    Me
+  </div>
+</div>
+
+</div>
+
+<script>
+// ---------- DATA ----------
+const LANGS = [
+  {f:'🇪🇸',n:'Spanish',l:'Easy'},{f:'🇫🇷',n:'French',l:'Easy'},
+  {f:'🇩🇪',n:'German',l:'Medium'},{f:'🇯🇵',n:'Japanese',l:'Hard'},
+  {f:'🇰🇷',n:'Korean',l:'Hard'},{f:'🇨🇳',n:'Chinese',l:'Hard'},
+  {f:'🇮🇹',n:'Italian',l:'Easy'},{f:'🇮🇳',n:'Hindi',l:'Medium'},
+  {f:'🇧🇷',n:'Portuguese',l:'Easy'},{f:'🇷🇺',n:'Russian',l:'Hard'}
+];
+const LESSONS = [
+  {t:'Greetings & Introductions',s:'10 min · Vocabulary',done:true},
+  {t:'Numbers 1–100',s:'8 min · Vocabulary',done:true},
+  {t:'Days & Months',s:'12 min · Vocabulary',done:true},
+  {t:'Present Tense Verbs',s:'15 min · Grammar',done:false},
+  {t:'Common Phrases',s:'10 min · Speaking',done:false},
+  {t:'Ordering at a Café',s:'14 min · Scenario',done:false},
+];
+const CARDS = [
+  {w:'hola',p:'/ˈo.la/',t:'hello',e:'Hola, ¿cómo estás? — Hello, how are you?'},
+  {w:'gracias',p:'/ˈɡɾa.sjas/',t:'thank you',e:'Muchas gracias, amigo. — Thank you very much, friend.'},
+  {w:'amor',p:'/aˈmoɾ/',t:'love',e:'El amor lo es todo. — Love is everything.'},
+  {w:'comida',p:'/koˈmi.ða/',t:'food',e:'La comida está deliciosa. — The food is delicious.'},
+  {w:'mañana',p:'/maˈɲa.na/',t:'tomorrow / morning',e:'Hasta mañana. — See you tomorrow.'}
+];
+const QUIZ = [
+  {w:'gracias',o:['hello','thank you','goodbye','please'],a:1},
+  {w:'manzana',o:['bread','apple','cheese','water'],a:1},
+  {w:'amigo',o:['enemy','friend','brother','stranger'],a:1},
+  {w:'agua',o:['fire','earth','water','wind'],a:2},
+  {w:'libro',o:['pen','book','desk','chair'],a:1}
+];
+
+// ---------- NAV ----------
+function go(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const showTab = ['s-home','s-lessons','s-ai','s-progress','s-profile'].includes(id);
+  document.getElementById('tabbar').style.display = showTab ? 'flex' : 'none';
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.screen===id));
+  document.querySelector('.scroll')?.scrollTo?.(0,0);
+}
+
+// ---------- THEME ----------
+function toggleTheme(){ document.body.classList.toggle('light'); }
+
+// ---------- LANGUAGES ----------
+let selectedLang = 'Spanish';
+function renderLangs(){
+  const g = document.getElementById('langGrid');
+  g.innerHTML = LANGS.map(l=>`
+    <div class="lang ${l.n===selectedLang?'selected':''}" onclick="pickLang('${l.n}')">
+      <div class="flag">${l.f}</div>
+      <div class="name">${l.n}</div>
+      <div class="lvl">${l.l} · 24M learners</div>
+    </div>`).join('');
+}
+function pickLang(n){ selectedLang=n; renderLangs(); }
+
+// ---------- LESSONS ----------
+function renderLessons(){
+  const html = LESSONS.map((l,i)=>`
+    <div class="lesson ${l.done?'done':''}" onclick="go('s-lesson')">
+      <div class="num">${l.done?'✓':i+1}</div>
+      <div class="info"><div class="t">${l.t}</div><div class="s">${l.s}</div></div>
+      <div style="color:var(--muted)">›</div>
+    </div>`).join('');
+  document.getElementById('todayLessons').innerHTML = LESSONS.slice(0,3).map((l,i)=>`
+    <div class="lesson ${l.done?'done':''}" onclick="go('s-lesson')">
+      <div class="num">${l.done?'✓':i+1}</div>
+      <div class="info"><div class="t">${l.t}</div><div class="s">${l.s}</div></div>
+      <div style="color:var(--muted)">›</div>
+    </div>`).join('');
+  document.getElementById('allLessons').innerHTML = html;
+}
+
+// ---------- FLASHCARDS ----------
+let fcI = 0;
+function renderCard(){
+  const c = CARDS[fcI];
+  document.getElementById('fcWord').textContent = c.w;
+  document.getElementById('fcPron').textContent = c.p;
+  document.getElementById('fcTrans').textContent = c.t;
+  document.getElementById('fcEx').textContent = c.e;
+  document.getElementById('fcIdx').textContent = fcI+1;
+  document.getElementById('fcTot').textContent = CARDS.length;
+  document.getElementById('fcBar').style.width = ((fcI+1)/CARDS.length*100)+'%';
+  document.getElementById('fcEl').classList.remove('flipped');
+}
+function flipCard(){ document.getElementById('fcEl').classList.toggle('flipped'); }
+function nextCard(){ fcI=(fcI+1)%CARDS.length; renderCard(); }
+function prevCard(){ fcI=(fcI-1+CARDS.length)%CARDS.length; renderCard(); }
+function markKnown(){ nextCard(); }
+function shuffleCards(){ CARDS.sort(()=>Math.random()-.5); fcI=0; renderCard(); }
+function saveCard(){ alert('⭐ Saved to favorites'); }
+
+// ---------- QUIZ ----------
+let qI=0, qScore=0;
+function renderQuiz(){
+  const q = QUIZ[qI];
+  document.getElementById('qWord').textContent = q.w;
+  document.getElementById('qNum').textContent = qI+1;
+  document.getElementById('qBar').style.width = ((qI+1)/QUIZ.length*100)+'%';
+  document.getElementById('qScore').textContent = qScore+' XP';
+  document.getElementById('qNext').classList.add('hidden');
+  document.getElementById('qOpts').innerHTML = q.o.map((o,i)=>`
+    <div class="q-opt" onclick="answer(${i})"><span>${o}</span><span class="k">${String.fromCharCode(65+i)}</span></div>
+  `).join('');
+}
+function answer(i){
+  const q = QUIZ[qI];
+  document.querySelectorAll('#qOpts .q-opt').forEach((el,idx)=>{
+    el.onclick=null;
+    if(idx===q.a) el.classList.add('correct');
+    if(idx===i && i!==q.a) el.classList.add('wrong');
+  });
+  if(i===q.a) qScore+=20;
+  document.getElementById('qScore').textContent = qScore+' XP';
+  document.getElementById('qNext').classList.remove('hidden');
+}
+function nextQuestion(){
+  qI++;
+  if(qI>=QUIZ.length){ alert('🎉 Quiz complete! You earned '+qScore+' XP'); qI=0; qScore=0; go('s-home'); }
+  renderQuiz();
+}
+
+// ---------- PRONUNCIATION ----------
+function speak(text,lang){
+  if(!('speechSynthesis' in window)) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang==='es'?'es-ES':'en-US'; u.rate=.9;
+  speechSynthesis.speak(u);
+}
+let micLive=false;
+function toggleMic(){
+  const btn=document.getElementById('micBtn'); const st=document.getElementById('micStatus');
+  micLive=!micLive;
+  if(micLive){ btn.classList.add('live'); st.textContent='Listening... speak now'; document.getElementById('pronResult').classList.add('hidden');
+    setTimeout(()=>{ btn.classList.remove('live'); st.textContent='Tap microphone to record'; micLive=false;
+      document.getElementById('pronResult').classList.remove('hidden'); }, 2200);
+  } else { btn.classList.remove('live'); st.textContent='Tap microphone to record'; }
+}
+
+// ---------- AI CHAT ----------
+function sendChat(){
+  const inp=document.getElementById('chatIn'); const v=inp.value.trim(); if(!v) return;
+  const list=document.getElementById('chatList');
+  list.insertAdjacentHTML('beforeend', `<div class="bubble me">${v}</div>`);
+  inp.value=''; list.parentElement.scrollTop=list.parentElement.scrollHeight;
+  setTimeout(()=>{
+    const replies = [
+      'Great question! Let me help you with that. 🌟',
+      '¡Excelente! Here\'s how you\'d say it in Spanish...',
+      'Let me break that down: the verb conjugation is...',
+      'Try practicing: "Hola, ¿qué tal?" — Hi, how\'s it going?'
+    ];
+    const r = replies[Math.floor(Math.random()*replies.length)];
+    list.insertAdjacentHTML('beforeend', `<div class="bubble ai">${r}</div>`);
+    list.parentElement.scrollTop=list.parentElement.scrollHeight;
+  }, 700);
+}
+
+// ---------- INIT ----------
+renderLangs(); renderLessons(); renderCard(); renderQuiz();
+document.getElementById('tabbar').style.display='none';
+</script>
+</body>
+</html>
